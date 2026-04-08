@@ -11,7 +11,7 @@ from collections import Counter
 # 페이지 설정
 st.set_page_config(page_title="Professional SEO Analyzer", layout="wide")
 
-st.title("🚀 전문 SEO & 키워드 분석 리포트")
+st.title("SEO & 키워드 분석 리포트( sanghee kim -ICS 제외) ")
 st.caption("On-Page SEO부터 키워드 밀도, 로딩 속도까지 한 번에 진단합니다.")
 st.markdown("---")
 
