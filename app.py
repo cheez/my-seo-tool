@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 # 페이지 설정
 st.set_page_config(page_title="SEO & Best Practices Full Report", layout="wide")
 
-st.title("📑 SEO & 웹 표준 종합 진단 리포트")
+st.title("📑 SEO & 웹 표준 종합 진단 리포트(김상희 개인의것.)")
 st.caption("모든 진단 항목과 해결책을 한 페이지에 나열합니다.")
 st.markdown("---")
 
