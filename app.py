@@ -65,14 +65,64 @@ if st.button("종합 리포트 생성"):
 
             st.divider()
 
-            # --- 섹션 3: 웹 표준 권장사항 (NEW!) ---
+# --- 섹션 3: 웹 표준 권장사항 ---
             st.header("3️⃣ 웹 표준 권장사항 (Best Practices)")
             b_col1, b_col2 = st.columns(2)
             
-            # 1) 외부 링크 보안 체크 (target="_blank" 사용 시 rel="noopener" 여부)
+            # 1) 외부 링크 보안 체크
             external_links = soup.find_all('a', href=True, target="_blank")
-            unsafe_links = [l for l in external_links if 'noopener' not in l.get('rel', [])]
+            unsafe_links = [l for l in external_links if 'noopener' not in (l.get('rel') or [])]
             
-            # 2) 이미지 규격 체크 (width, height 속성 유무)
+            # 2) 이미지 규격 체크 (width와 height 속성이 모두 있는지 확인)
             imgs = soup.find_all('img')
-            no_size_imgs =
+            no_size_imgs = [i for i in imgs if not (i.get('width') and i.get('height'))]
+            
+            with b_col1:
+                st.subheader("🔗 외부 링크 보안")
+                if not unsafe_links:
+                    st.success("✅ 모든 외부 링크가 안전하게 설정되었습니다.")
+                else:
+                    st.error(f"⚠️ 보안 취약점: {len(unsafe_links)}개의 외부 링크에 'noopener' 속성이 없습니다.")
+                    st.caption("새 창으로 링크를 열 때 사이트 성능과 보안을 위해 필수입니다.")
+
+            with b_col2:
+                st.subheader("🖼️ 이미지 레이아웃 안정성")
+                if not no_size_imgs:
+                    st.success("✅ 모든 이미지에 크기(width/height)가 지정되었습니다.")
+                else:
+                    st.warning(f"⚠️ 주의: {len(no_size_imgs)}개의 이미지에 크기 속성이 없습니다.")
+                    st.caption("크기 미지정 시 로딩 중 화면이 흔들리는(CLS) 현상이 발생할 수 있습니다.")
+
+            st.divider()
+
+            # --- 섹션 4: 상세 구조 분석 ---
+            st.header("4️⃣ 상세 구조 분석 (Headings & Alt)")
+            tab1, tab2 = st.tabs(["Heading 위계", "전체 이미지 리스트"])
+            
+            with tab1:
+                h1s = [h.get_text().strip() for h in soup.find_all('h1')]
+                st.write(f"**H1 태그 ({len(h1s)}개):**")
+                for h in h1s: 
+                    st.write(f"- {h}")
+                if len(h1s) != 1: 
+                    st.error("H1은 반드시 1개여야 최적입니다.")
+                
+            with tab2:
+                img_data = []
+                for i in imgs:
+                    alt = i.get('alt')
+                    img_data.append({
+                        "상태": "✅" if alt and alt.strip() else "❌ 누락",
+                        "Alt": alt if alt else "(비어있음)",
+                        "경로": i.get('src')
+                    })
+                
+                if img_data:
+                    st.dataframe(pd.DataFrame(img_data), use_container_width=True)
+                else:
+                    st.info("분석할 이미지가 없습니다.")
+
+        except Exception as e:
+            st.error(f"진단 중 오류 발생: {str(e)}")
+    else:
+        st.warning("URL을 입력해 주세요.")
