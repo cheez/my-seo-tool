@@ -2,26 +2,28 @@ import streamlit as st
 import cloudscraper
 from bs4 import BeautifulSoup
 import pandas as pd
+from fake_useragent import UserAgent
 
 # 페이지 설정
-st.set_page_config(page_title="Professional SEO Checker", layout="wide")
+st.set_page_config(page_title="Comprehensive SEO Report", layout="wide")
 
-st.title("🚀 전문 SEO 분석 대시보드 v2.0")
-st.info("URL을 입력하면 핵심 SEO 요소 10가지를 즉시 점검합니다.")
+st.title("📑 SEO 통합 분석 리포트")
+st.info("입력하신 URL의 모든 SEO 요소를 한 페이지로 상세히 나열합니다.")
 
 url = st.text_input("분석할 사이트 주소 (https:// 포함)", "https://")
 
-if st.button("상세 분석 시작"):
+if st.button("전체 리포트 생성"):
     if url.startswith("http"):
         try:
+            ua = UserAgent()
             scraper = cloudscraper.create_scraper()
-            res = scraper.get(url, timeout=20)
+            res = scraper.get(url, headers={'User-Agent': ua.random}, timeout=20)
             res.raise_for_status()
             res.encoding = res.apparent_encoding
             soup = BeautifulSoup(res.text, 'html.parser')
             
-            # --- 1. 헤드라인 영역 (Title, Meta, Canonical) ---
-            st.markdown("### 📋 메타 데이터 분석")
+            # --- 섹션 1: 핵심 메타 데이터 ---
+            st.header("1️⃣ 핵심 메타 데이터 (Metadata)")
             c1, c2, c3 = st.columns(3)
             
             title_tag = soup.find('title')
@@ -29,56 +31,89 @@ if st.button("상세 분석 시작"):
             canonical_tag = soup.find('link', attrs={'rel': 'canonical'})
             
             with c1:
-                st.metric("Title 존재 여부", "✅ 있음" if title_tag else "❌ 누락")
-                if title_tag: st.caption(f"내용: {title_tag.text}")
+                st.subheader("Title")
+                st.write(title_tag.text if title_tag else "❌ 누락됨")
             with c2:
-                st.metric("Description 존재", "✅ 있음" if desc_tag else "❌ 누락")
-                if desc_tag: st.caption(f"내용: {desc_tag.get('content')[:50]}...")
+                st.subheader("Description")
+                st.write(desc_tag.get('content') if desc_tag else "❌ 누락됨")
             with c3:
-                st.metric("Canonical 설정", "✅ 설정됨" if canonical_tag else "❌ 누락")
-
+                st.subheader("Canonical URL")
+                st.write(canonical_tag.get('href') if canonical_tag else "❌ 누락됨")
+            
             st.divider()
 
-            # --- 2. SNS 공유 점검 (Open Graph) ---
-            st.markdown("### 📱 SNS 공유 설정 (Open Graph)")
+            # --- 섹션 2: SNS 공유 설정 (Open Graph) ---
+            st.header("2️⃣ SNS 공유 설정 (Open Graph)")
             og_title = soup.find('meta', attrs={'property': 'og:title'})
             og_img = soup.find('meta', attrs={'property': 'og:image'})
+            og_desc = soup.find('meta', attrs={'property': 'og:description'})
             
-            col_og1, col_og2 = st.columns(2)
-            with col_og1:
-                st.write(f"**OG 제목:** {og_title['content'] if og_title else '❌ 없음'}")
-            with col_og2:
+            og_col1, og_col2 = st.columns([2, 1])
+            with og_col1:
+                st.write(f"**OG 제목:** {og_title['content'] if og_title else '❌ 누락'}")
+                st.write(f"**OG 설명:** {og_desc['content'] if og_desc else '❌ 누락'}")
+            with og_col2:
                 if og_img:
-                    st.image(og_img['content'], caption="공유 시 노출될 이미지", width=200)
+                    st.image(og_img['content'], caption="공유 미리보기 이미지", use_container_width=True)
                 else:
-                    st.write("**OG 이미지:** ❌ 없음")
+                    st.warning("OG 이미지가 없습니다.")
+            
+            st.divider()
+
+            # --- 섹션 3: 문서 구조 (Heading 위계) ---
+            st.header("3️⃣ 문서 구조 (Heading Tags)")
+            h_col1, h_col2, h_col3 = st.columns(3)
+            
+            # H1~H3 태그 추출
+            h1s = [h.get_text().strip() for h in soup.find_all('h1')]
+            h2s = [h.get_text().strip() for h in soup.find_all('h2')]
+            h3s = [h.get_text().strip() for h in soup.find_all('h3')]
+
+            with h_col1:
+                st.subheader(f"H1 ({len(h1s)}개)")
+                if h1s:
+                    for h in h1s: st.write(f"- {h}")
+                else: st.error("H1 태그가 없습니다!")
+                
+            with h_col2:
+                st.subheader(f"H2 ({len(h2s)}개)")
+                for h in h2s[:10]: st.write(f"- {h}") # 너무 많을까봐 10개만
+                if len(h2s) > 10: st.caption(f"...외 {len(h2s)-10}개 더 있음")
+                
+            with h_col3:
+                st.subheader(f"H3 ({len(h3s)}개)")
+                for h in h3s[:10]: st.write(f"- {h}")
+                if len(h3s) > 10: st.caption(f"...외 {len(h3s)-10}개 더 있음")
 
             st.divider()
 
-            # --- 3. 태그 위계 및 이미지 점검 ---
-            st.markdown("### 🏗️ 구조 및 이미지 분석")
-            tab1, tab2 = st.tabs(["Heading 구조", "이미지 Alt 속성"])
+            # --- 섹션 4: 이미지 분석 (Alt 속성 전수 조사) ---
+            st.header("4️⃣ 이미지 Alt 속성 분석")
+            img_list = []
+            all_images = soup.find_all('img')
             
-            with tab1:
-                for i in range(1, 4):
-                    tags = soup.find_all(f'h{i}')
-                    st.write(f"**H{i} 태그:** {len(tags)}개 발견")
-                    for t in tags[:3]: # 상위 3개만 미리보기
-                        st.caption(f"- {t.get_text().strip()}")
+            for img in all_images:
+                src = img.get('src', 'N/A')
+                alt = img.get('alt', None)
+                # alt가 None이거나 공백만 있는 경우 ❌ 누락
+                is_missing = alt is None or alt.strip() == ""
+                status = "❌ 누락" if is_missing else "✅ 정상"
+                img_list.append({
+                    "상태": status,
+                    "Alt 내용": alt if alt else "(비어있음)",
+                    "이미지 경로": src
+                })
             
-            with tab2:
-                img_list = []
-                for img in soup.find_all('img'):
-                    src = img.get('src', 'N/A')
-                    alt = img.get('alt', None)
-                    status = "✅ 정상" if alt and alt.strip() else "❌ 누락"
-                    img_list.append({"주소": src, "Alt 내용": alt, "상태": status})
+            if img_list:
+                df = pd.DataFrame(img_list)
+                # 상태가 누락인 것을 상단으로 정렬하여 보여줌
+                df = df.sort_values(by="상태", ascending=False)
                 
-                if img_list:
-                    img_df = pd.DataFrame(img_list)
-                    st.dataframe(img_df, use_container_width=True)
-                else:
-                    st.write("이미지가 없는 페이지입니다.")
+                missing_count = len(df[df['상태'] == "❌ 누락"])
+                st.warning(f"총 {len(all_images)}개의 이미지 중 **{missing_count}개**의 Alt 속성이 누락되었습니다.")
+                st.dataframe(df, use_container_width=True)
+            else:
+                st.info("이 페이지에는 분석할 이미지가 없습니다.")
 
         except Exception as e:
             st.error(f"분석 중 오류 발생: {str(e)}")
