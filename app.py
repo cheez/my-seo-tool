@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 # 페이지 설정
 st.set_page_config(page_title="Ultimate SEO & Best Practices Audit", layout="wide")
 
-st.title("🏆 프리미엄 SEO & 웹 표준 진단 리포트")
+st.title("SEO & 웹 표준 진단 리포트")
 st.markdown("---")
 
 url = st.text_input("진단할 사이트 주소 (https:// 필수)", "https://")
