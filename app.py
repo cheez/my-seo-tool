@@ -1,11 +1,3 @@
-아이구, 제가 실수를 했네요! 탭 방식을 쓰지 말아달라고 하신 걸 깜빡하고 다시 탭으로 묶어버렸군요. 정말 죄송합니다.
-
-말씀하신 대로 모든 내용을 탭 없이 아래로 길게 나열하고, 각 항목마다 **구체적인 해결책(Action Plan)**을 바로 확인할 수 있도록 코드를 전면 수정했습니다. 이제 마우스 휠만 내리면서 리포트를 쭉 읽어보시면 됩니다.
-
-🛠️ 탭 없이 길게 나열되는 '해결책 포함' 최종 app.py
-이 코드를 복사해서 GitHub에 업데이트해 주세요.
-
-Python
 import streamlit as st
 import cloudscraper
 from bs4 import BeautifulSoup
