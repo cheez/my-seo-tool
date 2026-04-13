@@ -1,14 +1,3 @@
-바이탈뷰티와 같이 자바스크립트로 이미지를 지연 로딩(Lazy Loading)하는 사이트에서도 경로를 최대한 찾아낼 수 있도록 이미지 추출 로직을 대폭 강화하여 업데이트했습니다.
-
-이번 업데이트의 핵심 변경 사항
-다중 속성 탐색: 단순히 src만 보는 것이 아니라 data-src, data-original, data-lazy-src, data-srcset 등 실제 이미지 주소가 숨겨져 있을 법한 모든 속성을 순차적으로 검사합니다.
-
-더미 이미지 필터링: 페이지 로딩 중에 임시로 보여주는 투명 이미지(blank.gif, pixel.png 등)는 무시하고 실제 콘텐츠 이미지를 찾습니다.
-
-자바스크립트 변수 패턴 대응: 이미지 주소에 //로 시작하는 프로토콜 상대 경로가 있을 경우 https:를 자동으로 붙여주는 처리를 추가했습니다.
-
-업데이트된 코드
-Python
 import streamlit as st
 import cloudscraper
 from bs4 import BeautifulSoup
