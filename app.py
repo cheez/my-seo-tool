@@ -24,12 +24,12 @@ if st.button("종합 분석 시작"):
                 start_time = time.time()
                 ua = UserAgent()
                 scraper = cloudscraper.create_scraper()
-                
+
                 res = scraper.get(url, headers={'User-Agent': ua.random}, timeout=20)
                 res.raise_for_status()
                 if res.encoding == 'ISO-8859-1':
                     res.encoding = res.apparent_encoding
-                
+
                 load_speed = round((time.time() - start_time), 2)
                 soup = BeautifulSoup(res.text, 'html.parser')
                 parsed_url = urlparse(url)
@@ -90,25 +90,58 @@ if st.button("종합 분석 시작"):
             st.header("5️⃣ 이미지 분석 및 Alt 속성 (전체 리스트)")
             imgs = soup.find_all('img')
             img_data = []
-            
+
+            alt_ok = 0
+            alt_empty = 0
+            alt_missing = 0
+
             for i in imgs:
-                # Alt 속성 직접 추출 (속성이 있으면 무조건 가져옴)
+                # alt 속성 존재 여부와 내용을 분리해서 체크
+                has_alt_attr = i.has_attr('alt')
                 alt_text = i.get('alt', '').strip()
-                raw_src = i.get('src', '').strip()
-                
+
+                # lazy load 대응: src가 없거나 placeholder면 data-src 등도 확인
+                raw_src = (
+                    i.get('src', '').strip() or
+                    i.get('data-src', '').strip() or
+                    i.get('data-lazy-src', '').strip() or
+                    i.get('data-original', '').strip()
+                )
+
                 if not raw_src or any(p in raw_src.lower() for p in ['blank', 'pixel', 'spacer']):
                     continue
 
                 full_src = urljoin(base_url, raw_src) if not raw_src.startswith('//') else "https:" + raw_src
                 clickable_path = f'<a href="{full_src}" target="_blank" style="text-decoration: none; color: #007bff; word-break: break-all;">{full_src}</a>'
 
+                # 상태를 3단계로 구분
+                if alt_text:
+                    status = "✅ 있음"
+                    alt_ok += 1
+                elif has_alt_attr:
+                    status = "⚠️ 빈 alt"   # alt=""인 경우 (장식 이미지로 의도된 경우일 수 있음)
+                    alt_empty += 1
+                else:
+                    status = "❌ 누락"      # alt 속성 자체가 없는 경우
+                    alt_missing += 1
+
                 img_data.append({
-                    "상태": "✅" if alt_text else "❌ 누락",
-                    "Alt 내용": alt_text if alt_text else "내용 없음",
+                    "상태": status,
+                    "Alt 내용": alt_text if alt_text else ("(장식 이미지 처리)" if has_alt_attr else "없음"),
                     "이미지 경로 (클릭 가능)": clickable_path
                 })
 
             if img_data:
+                # 요약 지표
+                total = len(img_data)
+                s_col1, s_col2, s_col3, s_col4 = st.columns(4)
+                with s_col1: st.metric("전체 이미지", f"{total}개")
+                with s_col2: st.metric("✅ Alt 있음", f"{alt_ok}개")
+                with s_col3: st.metric("⚠️ 빈 alt", f"{alt_empty}개")
+                with s_col4: st.metric("❌ Alt 누락", f"{alt_missing}개")
+
+                st.caption("⚠️ 빈 alt: alt 속성은 존재하지만 내용이 없음 (장식 이미지일 경우 정상, 의미 있는 이미지라면 수정 필요)")
+
                 # HTML 렌더링으로 스크롤 없이 전체 출력
                 st.write(pd.DataFrame(img_data).to_html(escape=False, index=False), unsafe_allow_html=True)
             else:
