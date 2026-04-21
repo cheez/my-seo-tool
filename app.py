@@ -96,19 +96,19 @@ if st.button("종합 분석 시작"):
             alt_missing = 0
 
             for i in imgs:
-                # alt 속성 존재 여부와 내용을 분리해서 체크
                 has_alt_attr = i.has_attr('alt')
                 alt_text = i.get('alt', '').strip()
-
-                # lazy load 대응: src가 없거나 placeholder면 data-src 등도 확인
                 raw_src = (
                     i.get('src', '').strip() or
                     i.get('data-src', '').strip() or
                     i.get('data-lazy-src', '').strip() or
                     i.get('data-original', '').strip()
                 )
-
-                if not raw_src or any(p in raw_src.lower() for p in ['blank', 'pixel', 'spacer']):
+                
+                # ▼ 디버그 추가 (확인 후 삭제)
+                st.write(f"src={raw_src[:60]} | has_alt={has_alt_attr} | alt='{alt_text}'")
+                
+                if not raw_src or any(p in raw_src.lower() for p in ['blank', 'pixel', 'spacer']):        
                     continue
 
                 full_src = urljoin(base_url, raw_src) if not raw_src.startswith('//') else "https:" + raw_src
