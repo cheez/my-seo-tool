@@ -2,6 +2,4 @@ streamlit
 requests
 beautifulsoup4
 pandas
-cloudscraper
-fake-useragent
 playwright
