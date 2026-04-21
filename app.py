@@ -34,9 +34,13 @@ if st.button("종합 분석 시작"):
  
                 with sync_playwright() as p:
                     browser = p.chromium.launch(headless=True)
-                    page = browser.new_page()
-                    page.goto(url, timeout=30000)
-                    page.wait_for_load_state('networkidle')
+                    context = browser.new_context(
+                        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    )
+                    page = context.new_page()
+                    page.goto(url, timeout=60000, wait_until='domcontentloaded')
+                    # JS 렌더링 대기 (networkidle 대신 고정 대기)
+                    page.wait_for_timeout(3000)
                     html = page.content()
                     browser.close()
  
