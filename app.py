@@ -39,8 +39,13 @@ if st.button("종합 분석 시작"):
                     )
                     page = context.new_page()
                     page.goto(url, timeout=60000, wait_until='domcontentloaded')
-                    # JS 렌더링 대기 (networkidle 대신 고정 대기)
-                    page.wait_for_timeout(3000)
+                    # img 태그가 나타날 때까지 최대 15초 대기
+                    try:
+                        page.wait_for_selector('img', timeout=15000)
+                    except:
+                        pass
+                    # 추가 렌더링 여유 대기
+                    page.wait_for_timeout(2000)
                     html = page.content()
                     browser.close()
  
