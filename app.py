@@ -159,6 +159,10 @@ if st.button("종합 분석 시작"):
                 # HTML 렌더링으로 스크롤 없이 전체 출력
                 st.write(pd.DataFrame(img_data).to_html(escape=False, index=False), unsafe_allow_html=True)
             else:
+             # 디버그 임시 추가
+          st.write(f"HTML 길이: {len(html)}")
+          st.write(f"img 태그 수: {len(soup.find_all('img'))}")
+          st.code(html[:2000])  # HTML 앞부분 확인
                 st.info("발견된 이미지가 없습니다.")
  
         except Exception as e:
