@@ -8,8 +8,10 @@ import time
 import re
 from collections import Counter
 
+# 페이지 설정
 st.set_page_config(page_title="Professional SEO Analyzer v1.8", layout="wide")
 
+# 원래 제목 유지
 st.title("SEO & 키워드 종합 분석 리포트(sanghee kim - ICS 제외)")
 st.caption("On-Page SEO부터 정밀 이미지 경로 분석까지, 전문적인 진단 결과를 제공합니다.")
 st.markdown("---")
@@ -24,11 +26,11 @@ if st.button("종합 분석 시작"):
                 ua = UserAgent()
                 scraper = cloudscraper.create_scraper()
                 
-                # 데이터 요청 및 인코딩 설정
+                # 데이터 요청
                 res = scraper.get(url, headers={'User-Agent': ua.random}, timeout=20)
                 res.raise_for_status()
                 
-                # 한글 깨짐 방지 로직
+                # 한글 인코딩 보정
                 if res.encoding == 'ISO-8859-1':
                     res.encoding = res.apparent_encoding
                 
@@ -77,7 +79,7 @@ if st.button("종합 분석 시작"):
 
             st.divider()
 
-            # --- 3. 콘텐츠 키워드 분석 ---
+            # --- 3. 키워드 분석 ---
             st.header("3️⃣ 콘텐츠 키워드 분석 (Top 10)")
             words = re.findall(r'[가-힣a-zA-Z]{2,}', text_content)
             common_words = Counter(words).most_common(10)
@@ -89,7 +91,7 @@ if st.button("종합 분석 시작"):
 
             st.divider()
 
-            # --- 4. 웹 표준 및 구조 ---
+            # --- 4. 웹 표준 및 문서 구조 ---
             st.header("4️⃣ 웹 표준 및 문서 구조")
             h1s = [h.get_text().strip() for h in soup.find_all('h1')]
             c_w1, c_w2 = st.columns(2)
@@ -105,37 +107,41 @@ if st.button("종합 분석 시작"):
 
             st.divider()
 
-            # --- 5. 이미지 분석 (Alt 인식 오류 수정 완료) ---
+            # --- 5. 이미지 분석 (수정: 스크롤 제거 및 클릭 링크 추가) ---
             st.header("5️⃣ 이미지 분석 및 Alt 속성 (전체 리스트)")
             imgs = soup.find_all('img')
             img_list = []
             
             for i in imgs:
-                # [수정포인트] Alt 속성을 더 정밀하게 체크합니다.
+                # Alt 정밀 추출
                 alt_val = i.get('alt', '').strip()
                 
-                # 불필요한 이미지(픽셀, 공백 등) 제외 로직
+                # 유효 경로 추출
                 raw_src = i.get('src', '')
                 if any(p in raw_src.lower() for p in ['blank', 'pixel', 'spacer', 'transparent']):
                     continue
 
-                # 경로 생성
                 if raw_src:
                     if raw_src.startswith('//'): full_src = "https:" + raw_src
                     else: full_src = urljoin(base_url, raw_src)
+                    
+                    # [추가] 클릭 시 새창으로 열리는 링크 HTML 생성
+                    display_link = f'<a href="{full_src}" target="_blank">이미지 보기</a>'
                 else:
                     full_src = "경로 찾을 수 없음"
+                    display_link = "경로 없음"
 
                 img_list.append({
                     "상태": "✅" if alt_val else "❌ 누락",
                     "Alt 내용": alt_val if alt_val else "내용 없음",
-                    "이미지 경로": full_src
+                    "이미지 경로(클릭)": display_link
                 })
 
             if img_list:
-                # 스크롤 없이 전체 노출을 원하시면 st.table(df)을 쓰셔도 됩니다.
-                # 하지만 데이터가 많을 때의 안정성을 위해 st.dataframe을 추천합니다.
-                st.dataframe(pd.DataFrame(img_list), use_container_width=True, height=600)
+                df = pd.DataFrame(img_list)
+                # [수정] st.table을 사용하여 스크롤 없이 하단으로 쭉 나열
+                # HTML 태그(링크)를 렌더링하기 위해 st.write(..., unsafe_allow_html=True) 조합 사용
+                st.write(df.to_html(escape=False, index=False, justify='center'), unsafe_allow_html=True)
                 st.info(f"총 {len(img_list)}개의 이미지를 발견했습니다.")
             else:
                 st.info("발견된 이미지가 없습니다.")
