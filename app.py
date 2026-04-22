@@ -11,14 +11,12 @@ from collections import Counter
 # Playwright chromium 설치 (최초 1회)
 @st.cache_resource(show_spinner=False)
 def install_playwright():
-    subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], 
+    subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"],
                    capture_output=True)
  
 install_playwright()
  
-# [1] 페이지 설정 및 제목 (원본 유지)
 st.set_page_config(page_title="Professional SEO Analyzer v2.1", layout="wide")
- 
 st.title("SEO & 키워드 종합 분석 리포트(sanghee kim - ICS 제외)")
 st.caption("On-Page SEO부터 정밀 이미지 경로 분석까지, 전문적인 진단 결과를 제공합니다.")
 st.markdown("---")
@@ -39,7 +37,6 @@ if st.button("종합 분석 시작"):
                     )
                     page = context.new_page()
                     page.goto(url, timeout=60000, wait_until='domcontentloaded')
-                    # JS 렌더링 대기 (networkidle 대신 고정 대기)
                     page.wait_for_timeout(3000)
                     html = page.content()
                     browser.close()
@@ -100,77 +97,69 @@ if st.button("종합 분석 시작"):
  
             st.divider()
  
-            # --- 5️⃣ 이미지 분석 (Alt 완벽 해결 및 스크롤 제거) ---
+            # --- 5️⃣ 이미지 분석 ---
             st.header("5️⃣ 이미지 분석 및 Alt 속성 (전체 리스트)")
             imgs = soup.find_all('img')
             img_data = []
- 
             alt_ok = 0
             alt_empty = 0
             alt_missing = 0
  
             for i in imgs:
-                # alt 속성 존재 여부와 내용을 분리해서 체크
                 has_alt_attr = i.has_attr('alt')
                 alt_text = i.get('alt', '').strip()
- 
-                # lazy load 대응: src가 없거나 placeholder면 data-src 등도 확인
                 raw_src = (
                     i.get('src', '').strip() or
                     i.get('data-src', '').strip() or
                     i.get('data-lazy-src', '').strip() or
                     i.get('data-original', '').strip()
                 )
- 
                 if not raw_src or any(p in raw_src.lower() for p in ['blank', 'pixel', 'spacer']):
                     continue
  
                 full_src = urljoin(base_url, raw_src) if not raw_src.startswith('//') else "https:" + raw_src
-                clickable_path = f'<a href="{full_src}" target="_blank" style="text-decoration: none; color: #007bff; word-break: break-all;">{full_src}</a>'
+                clickable_path = f'<a href="{full_src}" target="_blank" style="text-decoration:none; color:#007bff; word-break:break-all;">{full_src}</a>'
  
-                # 상태를 3단계로 구분
                 if alt_text:
                     status = "✅ 있음"
                     alt_ok += 1
                 elif has_alt_attr:
-                    status = "⚠️ 빈 alt"   # alt=""인 경우 (장식 이미지로 의도된 경우일 수 있음)
+                    status = "⚠️ 빈 alt"
                     alt_empty += 1
                 else:
-                    status = "❌ 누락"      # alt 속성 자체가 없는 경우
+                    status = "❌ 누락"
                     alt_missing += 1
  
                 img_data.append({
                     "상태": status,
-                    "Alt 내용": alt_text if alt_text else ("(장식 이미지 처리)" if has_alt_attr else "없음"),
-                    "이미지 경로 (클릭 가능)": clickable_path
+                    "Alt 내용": alt_text if alt_text else ("(장식 이미지)" if has_alt_attr else "없음"),
+                    "이미지 경로": clickable_path
                 })
  
             if img_data:
-                # 요약 지표
                 total = len(img_data)
                 s_col1, s_col2, s_col3, s_col4 = st.columns(4)
                 with s_col1: st.metric("전체 이미지", f"{total}개")
                 with s_col2: st.metric("✅ Alt 있음", f"{alt_ok}개")
                 with s_col3: st.metric("⚠️ 빈 alt", f"{alt_empty}개")
                 with s_col4: st.metric("❌ Alt 누락", f"{alt_missing}개")
- 
                 st.caption("⚠️ 빈 alt: alt 속성은 존재하지만 내용이 없음 (장식 이미지일 경우 정상, 의미 있는 이미지라면 수정 필요)")
  
-                # HTML 렌더링으로 스크롤 없이 전체 출력
                 html_table = pd.DataFrame(img_data).to_html(escape=False, index=False)
+                html_table = html_table.replace('<table border="1" class="dataframe">', '<table class="img-table">')
                 styled = """
-                <style>
-                table { width: 100%; border-collapse: collapse; font-size: 13px; }
-                thead tr { background-color: #f0f2f6; }
-                th { padding: 10px 12px; text-align: center; font-weight: 600; border-bottom: 2px solid #dee2e6; white-space: nowrap; }
-                td { padding: 8px 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
-                td:nth-child(1) { text-align: center; white-space: nowrap; width: 80px; }
-                td:nth-child(2) { width: 220px; word-break: break-word; }
-                td:nth-child(3) { word-break: break-all; }
-                tr:hover { background-color: #f8f9fa; }
-                </style>
-                """
-                st.write(styled + html_table, unsafe_allow_html=True)
+<style>
+table.img-table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
+table.img-table thead tr { background-color:#f0f2f6; }
+table.img-table th { padding:10px 12px; text-align:center; font-weight:600; border-bottom:2px solid #dee2e6; white-space:nowrap; }
+table.img-table td { padding:8px 12px; border-bottom:1px solid #eee; vertical-align:middle; }
+table.img-table td:nth-child(1) { text-align:center; white-space:nowrap; width:90px; }
+table.img-table td:nth-child(2) { width:250px; word-break:break-word; }
+table.img-table td:nth-child(3) { word-break:break-all; }
+table.img-table tr:hover { background-color:#f8f9fa; }
+</style>
+"""
+                st.markdown(styled + html_table, unsafe_allow_html=True)
             else:
                 st.info("발견된 이미지가 없습니다.")
  
