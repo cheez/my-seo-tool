@@ -135,7 +135,7 @@ if st.button("종합 분석 시작"):
                 a11y_text = ""
                 parent = i.parent
                 if parent:
-                    sr = parent.find(class_=lambda c: c and any('sr-only' in x or 'sr_only' in x for x in c))
+                    sr = parent.select_one('[class*="sr-only"]')
                     if sr:
                         a11y_text = ' '.join(sr.get_text(separator=' ').split())
                 if not a11y_text:
