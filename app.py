@@ -129,13 +129,22 @@ if st.button("종합 분석 시작"):
                 else:
                     status = "❌ 누락"
                     alt_missing += 1
- 
+                    
+                # figcaption 텍스트 추출 (부모 figure 안의 figcaption)
+                figcaption_text = ""
+                parent_figure = i.find_parent('figure')
+                if parent_figure:
+                    figcaption = parent_figure.find('figcaption')
+                    if figcaption:
+                        figcaption_text = ' '.join(figcaption.get_text(separator=' ').split())
+
                 img_data.append({
                     "상태": status,
                     "Alt 내용": alt_text if alt_text else ("(장식 이미지)" if has_alt_attr else "없음"),
+                    "접근성 텍스트(figcaption)": figcaption_text if figcaption_text else "-",
                     "이미지 경로": clickable_path
                 })
- 
+
             if img_data:
                 total = len(img_data)
                 s_col1, s_col2, s_col3, s_col4 = st.columns(4)
@@ -149,6 +158,7 @@ if st.button("종합 분석 시작"):
                 html_table = html_table.replace('<table border="1" class="dataframe">', '<table class="img-table">')
                 styled = """
 <style>
+
 table.img-table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
 table.img-table thead tr { background-color:#f0f2f6; }
 table.img-table th { padding:10px 12px; text-align:center; font-weight:600; border-bottom:2px solid #dee2e6; white-space:nowrap; }
