@@ -109,12 +109,13 @@ if st.button("종합 분석 시작"):
                 has_alt_attr = i.has_attr('alt')
                 alt_text = i.get('alt', '').strip()
                 raw_src = (
+                    i.get('ec-data-src', '').strip() or
                     i.get('src', '').strip() or
                     i.get('data-src', '').strip() or
                     i.get('data-lazy-src', '').strip() or
                     i.get('data-original', '').strip()
                 )
-                if not raw_src or any(p in raw_src.lower() for p in ['blank', 'pixel', 'spacer']):
+                if not raw_src or 'data:image' in raw_src or any(p in raw_src.lower() for p in ['blank', 'pixel', 'spacer']):
                     continue
  
                 full_src = urljoin(base_url, raw_src) if not raw_src.startswith('//') else "https:" + raw_src
@@ -130,18 +131,24 @@ if st.button("종합 분석 시작"):
                     status = "❌ 누락"
                     alt_missing += 1
                     
-                # figcaption 텍스트 추출 (부모 figure 안의 figcaption)
-                figcaption_text = ""
-                parent_figure = i.find_parent('figure')
-                if parent_figure:
-                    figcaption = parent_figure.find('figcaption')
-                    if figcaption:
-                        figcaption_text = ' '.join(figcaption.get_text(separator=' ').split())
+                # 접근성 텍스트 추출: figcaption 또는 sr-only 요소
+                a11y_text = ""
+                parent = i.parent
+                if parent:
+                    sr = parent.find(class_=lambda c: c and any('sr-only' in x or 'sr_only' in x for x in c))
+                    if sr:
+                        a11y_text = ' '.join(sr.get_text(separator=' ').split())
+                if not a11y_text:
+                    parent_figure = i.find_parent('figure')
+                    if parent_figure:
+                        figcaption = parent_figure.find('figcaption')
+                        if figcaption:
+                            a11y_text = ' '.join(figcaption.get_text(separator=' ').split())
 
                 img_data.append({
                     "상태": status,
                     "Alt 내용": alt_text if alt_text else ("(장식 이미지)" if has_alt_attr else "없음"),
-                    "접근성 텍스트(figcaption)": figcaption_text if figcaption_text else "-",
+                    "접근성 텍스트(sr-only/figcaption)": a11y_text if a11y_text else "-",
                     "이미지 경로": clickable_path
                 })
 
