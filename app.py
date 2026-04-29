@@ -180,5 +180,55 @@ table.img-table tr:hover { background-color:#f8f9fa; }
             else:
                 st.info("발견된 이미지가 없습니다.")
  
+          st.divider()
+
+            # --- 6️⃣ 클릭 추적 속성 분석 ---
+            st.header("6️⃣ 클릭 추적 속성 분석 (ap-click)")
+            click_attrs = ['ap-click-area', 'aria-hidden', 'ap-click-name', 'ap-click-data']
+            anchors = soup.find_all('a')
+            click_data = []
+
+            for a in anchors:
+                has_click_attr = any(a.has_attr(attr) for attr in click_attrs)
+                if not has_click_attr:
+                    continue
+
+                href = a.get('href', '').strip()
+                full_href = urljoin(base_url, href) if href and not href.startswith(('http', '//', '#', 'javascript')) else href
+                link_html = f'<a href="{full_href}" target="_blank" style="text-decoration:none; color:#007bff; word-break:break-all;">{full_href or "-"}</a>' if full_href and full_href not in ('-', '', 'javascript:void(0)', 'javascript:;') else (full_href or "-")
+                link_text = ' '.join(a.get_text(separator=' ').split())[:80]
+
+                click_data.append({
+                    "링크 텍스트": link_text if link_text else "-",
+                    "ap-click-area": a.get('ap-click-area', '-'),
+                    "aria-hidden": a.get('aria-hidden', '-'),
+                    "ap-click-name": a.get('ap-click-name', '-'),
+                    "ap-click-data": a.get('ap-click-data', '-'),
+                    "링크 경로": link_html,
+                })
+
+            if click_data:
+                st.metric("클릭 추적 a 태그 수", f"{len(click_data)}개")
+                html_click_table = pd.DataFrame(click_data).to_html(escape=False, index=False)
+                html_click_table = html_click_table.replace('<table border="1" class="dataframe">', '<table class="click-table">')
+                click_styled = """
+               <style>
+               table.click-table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
+               table.click-table thead tr { background-color:#e8f4fd; }
+               table.click-table th { padding:10px 12px; text-align:center; font-weight:600; border-bottom:2px solid #bee3f8; white-space:nowrap; }
+               table.click-table td { padding:8px 12px; border-bottom:1px solid #eee; vertical-align:middle; word-break:break-word; }
+               table.click-table td:nth-child(1) { width:130px; }
+               table.click-table td:nth-child(2) { width:130px; text-align:center; }
+               table.click-table td:nth-child(3) { width:90px; text-align:center; }
+               table.click-table td:nth-child(4) { width:160px; }
+               table.click-table td:nth-child(5) { width:180px; }
+               table.click-table td:nth-child(6) { word-break:break-all; }
+               table.click-table tr:hover { background-color:#f0f8ff; }
+               </style>
+               """
+                st.markdown(click_styled + html_click_table, unsafe_allow_html=True)
+            else:
+                st.info("ap-click 관련 속성을 가진 a 태그가 없습니다.")
+
         except Exception as e:
             st.error(f"오류 발생: {str(e)}")
