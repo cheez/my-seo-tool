@@ -179,8 +179,8 @@ table.img-table tr:hover { background-color:#f8f9fa; }
                 st.markdown(styled + html_table, unsafe_allow_html=True)
             else:
                 st.info("발견된 이미지가 없습니다.")
- 
-          st.divider()
+
+            st.divider()
 
             # --- 6️⃣ 클릭 추적 속성 분석 ---
             st.header("6️⃣ 클릭 추적 속성 분석 (ap-click)")
@@ -212,20 +212,20 @@ table.img-table tr:hover { background-color:#f8f9fa; }
                 html_click_table = pd.DataFrame(click_data).to_html(escape=False, index=False)
                 html_click_table = html_click_table.replace('<table border="1" class="dataframe">', '<table class="click-table">')
                 click_styled = """
-               <style>
-               table.click-table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
-               table.click-table thead tr { background-color:#e8f4fd; }
-               table.click-table th { padding:10px 12px; text-align:center; font-weight:600; border-bottom:2px solid #bee3f8; white-space:nowrap; }
-               table.click-table td { padding:8px 12px; border-bottom:1px solid #eee; vertical-align:middle; word-break:break-word; }
-               table.click-table td:nth-child(1) { width:130px; }
-               table.click-table td:nth-child(2) { width:130px; text-align:center; }
-               table.click-table td:nth-child(3) { width:90px; text-align:center; }
-               table.click-table td:nth-child(4) { width:160px; }
-               table.click-table td:nth-child(5) { width:180px; }
-               table.click-table td:nth-child(6) { word-break:break-all; }
-               table.click-table tr:hover { background-color:#f0f8ff; }
-               </style>
-               """
+<style>
+table.click-table { width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed; }
+table.click-table thead tr { background-color:#e8f4fd; }
+table.click-table th { padding:10px 12px; text-align:center; font-weight:600; border-bottom:2px solid #bee3f8; white-space:nowrap; }
+table.click-table td { padding:8px 12px; border-bottom:1px solid #eee; vertical-align:middle; word-break:break-word; }
+table.click-table td:nth-child(1) { width:130px; }
+table.click-table td:nth-child(2) { width:130px; text-align:center; }
+table.click-table td:nth-child(3) { width:90px; text-align:center; }
+table.click-table td:nth-child(4) { width:160px; }
+table.click-table td:nth-child(5) { width:180px; }
+table.click-table td:nth-child(6) { word-break:break-all; }
+table.click-table tr:hover { background-color:#f0f8ff; }
+</style>
+"""
                 st.markdown(click_styled + html_click_table, unsafe_allow_html=True)
             else:
                 st.info("ap-click 관련 속성을 가진 a 태그가 없습니다.")
