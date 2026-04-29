@@ -179,7 +179,7 @@ table.img-table tr:hover { background-color:#f8f9fa; }
                 st.markdown(styled + html_table, unsafe_allow_html=True)
             else:
                 st.info("발견된 이미지가 없습니다.")
- 
+
             st.divider()
 
             # --- 6️⃣ 클릭 추적 속성 분석 ---
